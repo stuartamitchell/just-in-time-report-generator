@@ -29,10 +29,12 @@ class Reports:
         self.reports = None
 
         self.__read_data(xlsx_file)
+        self.reports = self.__generate_reports()
+
 
     def __read_data(self, xlsx_file):
         '''
-        read the data from xlsx_file
+        read the data from xlsx_file and populate class attributes except for reports
 
         Parameters
         ----------
@@ -100,6 +102,7 @@ class Reports:
             a list of tuples of the form (label, total)
         '''
         set_labels = list(set(labels))
+        set_labels.sort()
         label_totals = list(zip(labels, totals))
 
         totals = []
@@ -110,12 +113,67 @@ class Reports:
 
         return totals
 
+    def __get_percentages(self, student):
+        '''
+        Get percentage totals topic and type of question as arrays
+
+        Returns
+        -------
+        tuple of lists
+            the lists of percentage totals for each student 
+        '''
+        student_topic_totals = [t[1] for t in student.by_topic()]
+        student_type_totals = [t[1] for t in student.by_type()]
+
+        topic_totals = [t[1] for t in self.topic_totals]
+        type_totals = [t[1] for t in self.type_totals]
+
+        percentages_by_topic = []
+        percentages_by_type = []
+        
+        for i in range(0, len(topic_totals)):
+            percentages_by_topic.append(student_topic_totals[i] / topic_totals[i])
+
+        for i in range(0, len(type_totals)):
+            percentages_by_type.append(student_type_totals[i] / type_totals[i])
+        
+        return percentages_by_topic, percentages_by_type
+    
+    def __generate_reports(self):
+        '''
+        Generates a report comment for each student
+
+
+        Returns
+        -------
+        list
+            a list of student reports
+        '''
+        descriptors = ['very limited', 'limited', 'satisfactory', 'proficient', 'advanced']
+
+        thresholds = [
+                        (0, 0.4, 'very limited'),
+                        (0.4, 0.5, 'limited'),
+                        (0.5, 0.7, 'satisfactory'),
+                        (0.7, 0.85, 'proficient'),
+                        (0.85,1, 'advanced')
+                    ]
+        
+        reports = []
+
+        for student in self.students:
+            percentages_by_topic, percentages_by_type = self.__get_percentages()
+
+            topic_achievement_descriptors = []
+
+            topics = list(set(self.topics))
+            topics.sort()
+
+            for topic in topics:
+                ''''''
+
+        return reports
+
 if __name__ == '__main__':
     test_file = os.path.join(os.getenv('HOME'),'Desktop/test_data.xlsx')
     reports = Reports(test_file)
-
-    for student in reports.students:
-        print(student.preferred)
-        print(student.by_question())
-        print(student.by_topic())
-        print(student.by_type())
