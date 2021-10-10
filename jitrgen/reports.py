@@ -31,9 +31,6 @@ class Reports:
         self.__read_data(xlsx_file)
         self.reports = self.__generate_reports()
 
-        print(self.reports)
-
-
     def __read_data(self, xlsx_file):
         '''
         read the data from xlsx_file and populate class attributes except for reports
@@ -147,7 +144,42 @@ class Reports:
         
         return percentages_by_topic, percentages_by_type
 
-    def __descriptors(self, category, percentages):
+    def __topic_descriptors(self, percentages):
+        '''
+        Returns a list of descriptors for the topics given percentages
+
+        Parameters
+        ----------
+        percentages : list
+            the list of percentage scores the student achieved in each topic
+
+        Returns
+        -------
+        dict
+            a dictionary keyed by descriptor, values a list of topics
+        '''
+        achievement_descriptors = {}
+
+        for i, elem  in enumerate(self.topics):
+            descriptor = 'poor'
+
+            if percentages[i] >= 0.4 and percentages[i] < 0.5:
+                descriptor = 'limited'
+            elif percentages[i] >= 0.5 and percentages[i] < 0.7:
+                descriptor = 'satisfactory'
+            elif percentages[i] >= 0.7 and percentages[i] < 0.85:
+                descriptor = 'advanced'
+            elif percentages[i] >= 0.85:
+                descriptor = 'exceptional'
+            
+            if descriptor not in achievement_descriptors.keys():
+                achievement_descriptors[descriptor] = [elem]
+            else:
+                achievement_descriptors[descriptor].append(elem)
+        
+        return achievement_descriptors
+
+    def __type_descriptors(self, percentages):
         '''
         Returns a list of descriptors for the types given percentages
 
@@ -164,18 +196,15 @@ class Reports:
 
         achievement_descriptors = {}
 
-        for i, elem  in enumerate(category):
-            descriptor = 'poor'
+        for i, type  in enumerate(self.types):
+            descriptor = 'limited'
 
-            if percentages[i] >= 0.5 and percentages[i] < 0.75:
-                descriptor = 'satisfactory'
+            if percentages[i] >= 0.5 and percentages[i] < 0.7:
+                descriptor = 'some'
             elif percentages[i] >= 0.75:
-                descriptor = 'strong'
+                descriptor = 'high'
             
-            if descriptor not in achievement_descriptors.keys():
-                achievement_descriptors[descriptor] = [elem]
-            else:
-                achievement_descriptors[descriptor].append(elem)
+            achievement_descriptors[type] = descriptor
         
         return achievement_descriptors
     
@@ -193,14 +222,58 @@ class Reports:
         reports = []
 
         for student in self.students:
-            report = '{}, you have demonstrated '.format(student.preferred) 
+            report = '{}, you have demonstrated'.format(student.preferred) 
 
             percentages_by_topic, percentages_by_type = self.__percentages(student)
 
-            topic_descriptors = self.__descriptors(self.topics, percentages_by_topic)
-            type_descriptors = self.__descriptors(self.types, percentages_by_type)
+            topic_descriptors = self.__topic_descriptors(percentages_by_topic)
+            type_descriptors = self.__type_descriptors(percentages_by_type)
 
-            print(student.preferred, topic_descriptors, type_descriptors)
+            topic_phrase = ''
+
+            for i, descriptor in enumerate(topic_descriptors.keys()):
+                if i == len(topic_descriptors.keys()) - 1 and i > 0:
+                    topic_phrase += ', and '
+                elif i > 0:
+                    topic_phrase += ', '
+                else:
+                    topic_phrase += ' '
+                
+                if descriptor in ['advanced', 'exceptional']:
+                    topic_phrase += 'an {} understanding of '.format(descriptor)
+                else:
+                    topic_phrase += 'a {} understanding of '.format(descriptor)
+
+                topics = topic_descriptors[descriptor]
+
+                for j, topic in enumerate(topics):
+                    if j == 0:
+                        topic_phrase += topic
+                    elif j == len(topics) - 1 and j > 0:
+                        topic_phrase += ', and ' + topic
+                    else:
+                        topic_phrase += ', ' + topic
+
+            topic_phrase += '.'
+
+            report += topic_phrase
+
+            type_phrase = ' '
+
+            if type_descriptors['r'] == 'limited':
+                type_phrase += 'It appears that you have experienced difficulties with the routine problems covered in the unit. Please ensure that you are asking enough questions in class to build your understanding of the procedures and complete sufficient revision.'
+            elif type_descriptors['r'] == 'some' and type_descriptors['nr'] in ['limited', 'some']:
+                type_phrase += 'You have shown some competancy with the routine problems in the paper. In your homework, focus on building fluency by adding time pressure into your practice. Consider engaging with some of the enrichment materials to strengthen your capacity to apply your knowledge in novel situations.'
+            elif type_descriptors['r'] == 'some' and type_descriptors['nr'] == 'high':
+                type_phrase += 'You have shown a high capacity to apply your knowledge in novel situations, but have not demonstrated a similar ability in the routine problems. This suggests that you are undertaking insufficient practice of the fundamentals. Ensure that you strengthen your fundamentals before focussing on problem solving.'
+            elif type_descriptors['r'] == 'high' and type_descriptors['nr'] in ['limited', 'some']:
+                type_phrase += 'You have demonstrated a high capacity to handle the routine problems in the paper, but have not been able to apply your knowledge to novel situations to the same degree. Consider devoting a greater proportion of your practice to problem-solving activities.'
+            elif type_descriptors['r'] == 'high' and type_descriptors['nr'] == 'high':
+                type_phrase += 'You have shown a high degree of fluency in both the routine and non-routine problems in the paper. Keep up the hard work!'
+
+            report += type_phrase
+
+            report += ' Please read the feedback in your paper carefully for a detailed account of your achievement in this assessment.'
 
             reports.append(report)
             
