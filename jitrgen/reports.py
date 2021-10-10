@@ -64,9 +64,6 @@ class Reports:
         self.types = list(set(self.types))
         self.types.sort()
 
-        print(self.topics)
-        print(self.types)
-
     def __create_students(self, rows):
         '''
         creates the list of student objects
@@ -203,7 +200,7 @@ class Reports:
             topic_descriptors = self.__descriptors(self.topics, percentages_by_topic)
             type_descriptors = self.__descriptors(self.types, percentages_by_type)
 
-            print(student.preferred, percentages_by_topic, topic_descriptors, percentages_by_type, type_descriptors)
+            print(student.preferred, topic_descriptors, type_descriptors)
 
             reports.append(report)
             
