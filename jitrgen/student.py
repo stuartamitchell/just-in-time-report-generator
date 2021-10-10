@@ -59,6 +59,8 @@ class Student:
             a list of tuples of the form (label, total)
         '''
         set_labels = list(set(labels))
+        set_labels.sort()
+        
         label_totals = list(zip(labels, self.totals))
 
         totals = []
@@ -66,8 +68,6 @@ class Student:
         for label in set_labels:
             total = sum([t[1] for t in label_totals if t[0] == label])
             totals.append((label, total))
-
-        totals.sort()
 
         return totals
     

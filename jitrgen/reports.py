@@ -31,6 +31,8 @@ class Reports:
         self.__read_data(xlsx_file)
         self.reports = self.__generate_reports()
 
+        print(self.reports)
+
 
     def __read_data(self, xlsx_file):
         '''
@@ -44,15 +46,23 @@ class Reports:
         setup_sheet = pd.read_excel(xlsx_file, sheet_name='Setup')
         students_sheet = pd.read_excel(xlsx_file, sheet_name='Students')
 
-        self.questions = setup_sheet['Question']
-        self.totals = setup_sheet['Total']
+        # set up with duplicates for early set up
         self.topics = setup_sheet['Topic']
         self.types = setup_sheet['Type']
+        
+        self.questions = setup_sheet['Question']
+        self.totals = setup_sheet['Total']
 
         self.students = self.__create_students(students_sheet.itertuples())
 
         self.topic_totals = self.__create_totals(self.topics, self.totals)
         self.type_totals = self.__create_totals(self.types, self.totals)
+
+        # remove duplicates now that we don't need them
+        self.topics = list(set(self.topics))
+        self.topics.sort()
+        self.types = list(set(self.types))
+        self.types.sort()
 
     def __create_students(self, rows):
         '''
@@ -103,17 +113,18 @@ class Reports:
         '''
         set_labels = list(set(labels))
         set_labels.sort()
+
         label_totals = list(zip(labels, totals))
 
         totals = []
 
         for label in set_labels:
             total = sum([t[1] for t in label_totals if t[0] == label])
-            totals.append((label, total))
+            totals.append(total)
 
         return totals
 
-    def __get_percentages(self, student):
+    def __percentages(self, student):
         '''
         Get percentage totals topic and type of question as arrays
 
@@ -125,19 +136,78 @@ class Reports:
         student_topic_totals = [t[1] for t in student.by_topic()]
         student_type_totals = [t[1] for t in student.by_type()]
 
-        topic_totals = [t[1] for t in self.topic_totals]
-        type_totals = [t[1] for t in self.type_totals]
-
         percentages_by_topic = []
         percentages_by_type = []
         
-        for i in range(0, len(topic_totals)):
-            percentages_by_topic.append(student_topic_totals[i] / topic_totals[i])
+        for i in range(0, len(self.topic_totals)):
+            percentages_by_topic.append(student_topic_totals[i] / self.topic_totals[i])
 
-        for i in range(0, len(type_totals)):
-            percentages_by_type.append(student_type_totals[i] / type_totals[i])
+        for i in range(0, len(self.type_totals)):
+            percentages_by_type.append(student_type_totals[i] / self.type_totals[i])
         
         return percentages_by_topic, percentages_by_type
+    
+    def __topic_descriptors(self, percentages):
+        '''
+        Returns a list of descriptors for the topics given percentages
+
+        Parameters
+        ----------
+        percentages : list
+            the list of percentage scores the student achieved in each topic
+
+        Returns
+        -------
+        list
+            a list of descriptors indexed by topic
+        '''
+
+        achievement_descriptors = []
+
+        for i in range(0, len(self.topics)):
+            descriptor = 'poor'
+
+            if percentages[i] > 0.4 and percentages[i] < 0.5:
+                descriptor = 'limited'
+            elif percentages[i] >= 0.5 and percentages[i] < 0.7:
+                descriptor = 'satisfactory'
+            elif percentages[i] >= 0.7 and percentages[i] < 0.85:
+                descriptor = 'proficient'
+            elif percentages[i] >= 0.85:
+                descriptor = 'advanced'
+            
+            achievement_descriptors.append(descriptor)
+        
+        return achievement_descriptors
+
+    def __type_descriptors(self, percentages):
+        '''
+        Returns a list of descriptors for the types given percentages
+
+        Parameters
+        ----------
+        percentages : list
+            the list of percentage scores the student achieved in each type of question
+
+        Returns
+        -------
+        list
+            a list of descriptors indexed by type
+        '''
+
+        achievement_descriptors = []
+
+        for i in range(0, len(self.types)):
+            descriptor = 'poor'
+
+            if percentages[i] >= 0.5 and percentages[i] < 0.75:
+                descriptor = 'satisfactory'
+            elif percentages[i] >= 0.75:
+                descriptor = 'strong'
+            
+            achievement_descriptors.append(descriptor)
+        
+        return achievement_descriptors
     
     def __generate_reports(self):
         '''
@@ -149,29 +219,19 @@ class Reports:
         list
             a list of student reports
         '''
-        descriptors = ['very limited', 'limited', 'satisfactory', 'proficient', 'advanced']
-
-        thresholds = [
-                        (0, 0.4, 'very limited'),
-                        (0.4, 0.5, 'limited'),
-                        (0.5, 0.7, 'satisfactory'),
-                        (0.7, 0.85, 'proficient'),
-                        (0.85,1, 'advanced')
-                    ]
         
         reports = []
 
         for student in self.students:
-            percentages_by_topic, percentages_by_type = self.__get_percentages()
+            report = '{}, you have demonstrated '.format(student.preferred) 
 
-            topic_achievement_descriptors = []
+            percentages_by_topic, percentages_by_type = self.__percentages(student)
 
-            topics = list(set(self.topics))
-            topics.sort()
+            topic_descriptors = self.__topic_descriptors(percentages_by_topic)
+            type_descriptors = self.__type_descriptors(percentages_by_type)
 
-            for topic in topics:
-                ''''''
-
+            reports.append(report)
+            
         return reports
 
 if __name__ == '__main__':
