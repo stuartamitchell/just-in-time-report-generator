@@ -17,14 +17,6 @@ class Reports:
 
     Methods
     -------
-    read_data(self, xlsx_file)
-        reads the data from the xlsx file and populates several attributes
-
-    create_students(self, rows)
-        creates a list of Student objects with the data in xlsx_file
-
-    create_topc_totals(self)
-        creates a list of totals per topic in the assessment
     '''
 
     def __init__(self, xlsx_file):
@@ -32,13 +24,20 @@ class Reports:
         self.totals = None
         self.topics = None
         self.topic_totals = None
+        self.type_totals = None
         self.students = None
         self.reports = None
 
-        self.read_data(xlsx_file)
+        self.__read_data(xlsx_file)
 
-    def read_data(self, xlsx_file):
+    def __read_data(self, xlsx_file):
         '''
+        read the data from xlsx_file
+
+        Parameters
+        ----------
+        xlsx_file : file
+            an xlsx file containing student data and setup information about an assessment item
         '''
         setup_sheet = pd.read_excel(xlsx_file, sheet_name='Setup')
         students_sheet = pd.read_excel(xlsx_file, sheet_name='Students')
@@ -46,13 +45,26 @@ class Reports:
         self.questions = setup_sheet['Question']
         self.totals = setup_sheet['Total']
         self.topics = setup_sheet['Topic']
+        self.types = setup_sheet['Type']
 
-        self.students = self.create_students(students_sheet.itertuples())
+        self.students = self.__create_students(students_sheet.itertuples())
 
-        self.topic_totals = self.create_topic_totals()
+        self.topic_totals = self.__create_totals(self.topics, self.totals)
+        self.type_totals = self.__create_totals(self.types, self.totals)
 
-    def create_students(self, rows):
+    def __create_students(self, rows):
         '''
+        creates the list of student objects
+
+        Parameters
+        ----------
+        rows : list
+            a list of student data from an excel spreadsheet
+
+        Returns
+        -------
+        list
+            a list of Student objets
         '''
 
         students = []
@@ -64,26 +76,46 @@ class Reports:
             firstname = student[1]
             
             scores = student[2:]
-            results = list(zip(self.questions, self.topics, scores))
+            results = list(zip(self.questions, self.topics, self.types, scores))
 
             students.append(Student(surname, firstname, results))
 
         return students
 
-    def create_topic_totals(self):
-        topic_totals = []
-        
-        topics = list(set(self.topics))
+    def __create_totals(self, labels, totals):
+        '''
+        creates a list of tuples (label, total)
 
-        for topic in topics:
-            topic_total = sum([t[1] for t in list(zip(self.topics, self.totals)) if t[0] == topic])
-            topic_totals.append((topic, topic_total))
+        Parameters
+        ----------
+        labels : list
+            a list of labels for the tuple
 
-        return topic_totals
+        totals : list
+            a list of totals for the tuple
+
+        Returns
+        -------
+        list
+            a list of tuples of the form (label, total)
+        '''
+        set_labels = list(set(labels))
+        label_totals = list(zip(labels, totals))
+
+        totals = []
+
+        for label in set_labels:
+            total = sum([t[1] for t in label_totals if t[0] == label])
+            totals.append((label, total))
+
+        return totals
 
 if __name__ == '__main__':
     test_file = os.path.join(os.getenv('HOME'),'Desktop/test_data.xlsx')
     reports = Reports(test_file)
 
-    print(list(zip(reports.questions, reports.totals, reports.topics)))
-    print(reports.topic_totals)
+    for student in reports.students:
+        print(student.preferred)
+        print(student.by_question())
+        print(student.by_topic())
+        print(student.by_type())
