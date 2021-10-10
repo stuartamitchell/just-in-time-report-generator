@@ -1,4 +1,3 @@
-import os
 import pandas as pd
 from student import Student
 
@@ -278,7 +277,3 @@ class Reports:
             reports.append(report)
             
         return reports
-
-if __name__ == '__main__':
-    test_file = os.path.join(os.getenv('HOME'),'Desktop/test_data.xlsx')
-    reports = Reports(test_file)
