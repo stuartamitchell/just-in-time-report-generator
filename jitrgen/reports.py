@@ -64,6 +64,9 @@ class Reports:
         self.types = list(set(self.types))
         self.types.sort()
 
+        print(self.topics)
+        print(self.types)
+
     def __create_students(self, rows):
         '''
         creates the list of student objects
@@ -146,58 +149,25 @@ class Reports:
             percentages_by_type.append(student_type_totals[i] / self.type_totals[i])
         
         return percentages_by_topic, percentages_by_type
-    
-    def __topic_descriptors(self, percentages):
-        '''
-        Returns a list of descriptors for the topics given percentages
 
-        Parameters
-        ----------
-        percentages : list
-            the list of percentage scores the student achieved in each topic
-
-        Returns
-        -------
-        list
-            a list of descriptors indexed by topic
-        '''
-
-        achievement_descriptors = []
-
-        for i in range(0, len(self.topics)):
-            descriptor = 'poor'
-
-            if percentages[i] > 0.4 and percentages[i] < 0.5:
-                descriptor = 'limited'
-            elif percentages[i] >= 0.5 and percentages[i] < 0.7:
-                descriptor = 'satisfactory'
-            elif percentages[i] >= 0.7 and percentages[i] < 0.85:
-                descriptor = 'proficient'
-            elif percentages[i] >= 0.85:
-                descriptor = 'advanced'
-            
-            achievement_descriptors.append(descriptor)
-        
-        return achievement_descriptors
-
-    def __type_descriptors(self, percentages):
+    def __descriptors(self, category, percentages):
         '''
         Returns a list of descriptors for the types given percentages
 
         Parameters
         ----------
         percentages : list
-            the list of percentage scores the student achieved in each type of question
+            the list of percentage scores the student achieved in the category
 
         Returns
         -------
-        list
-            a list of descriptors indexed by type
+        dict
+            a dictionary keyed by descriptor values a list of category elements
         '''
 
-        achievement_descriptors = []
+        achievement_descriptors = {}
 
-        for i in range(0, len(self.types)):
+        for i, elem  in enumerate(category):
             descriptor = 'poor'
 
             if percentages[i] >= 0.5 and percentages[i] < 0.75:
@@ -205,7 +175,10 @@ class Reports:
             elif percentages[i] >= 0.75:
                 descriptor = 'strong'
             
-            achievement_descriptors.append(descriptor)
+            if descriptor not in achievement_descriptors.keys():
+                achievement_descriptors[descriptor] = [elem]
+            else:
+                achievement_descriptors[descriptor].append(elem)
         
         return achievement_descriptors
     
@@ -227,8 +200,10 @@ class Reports:
 
             percentages_by_topic, percentages_by_type = self.__percentages(student)
 
-            topic_descriptors = self.__topic_descriptors(percentages_by_topic)
-            type_descriptors = self.__type_descriptors(percentages_by_type)
+            topic_descriptors = self.__descriptors(self.topics, percentages_by_topic)
+            type_descriptors = self.__descriptors(self.types, percentages_by_type)
+
+            print(student.preferred, percentages_by_topic, topic_descriptors, percentages_by_type, type_descriptors)
 
             reports.append(report)
             
