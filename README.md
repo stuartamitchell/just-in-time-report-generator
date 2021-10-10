@@ -5,4 +5,4 @@
 
     Options:
         -d --dir    The directory you wish to save the output
-        --help      Show this message and exit
+        --help      Show this message and exit.
