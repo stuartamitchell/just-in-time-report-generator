@@ -1,1 +1,1 @@
-web: flask run jitrgen
+web: flask run
