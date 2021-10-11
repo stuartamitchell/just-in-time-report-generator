@@ -1,5 +1,5 @@
 import pandas as pd
-from student import Student
+from jitrgen.student import Student
 
 class Reports:
     '''
