@@ -2,3 +2,4 @@
 .direnv
 .envrc
 __pycache__/
+jitrgen.egg-info

@@ -1,0 +1,3 @@
+graft jitrgen/static
+graft jitrgen/templates
+global-exclude *.pyc
