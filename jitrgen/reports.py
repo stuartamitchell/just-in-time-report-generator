@@ -18,7 +18,7 @@ class Reports:
     -------
     '''
 
-    def __init__(self, xlsx_file):
+    def __init__(self, setup_sheet, students_sheet):
         self.questions = None
         self.totals = None
         self.topics = None
@@ -27,10 +27,10 @@ class Reports:
         self.students = None
         self.reports = None
 
-        self.__read_data(xlsx_file)
+        self.__read_data(setup_sheet, students_sheet)
         self.reports = self.__generate_reports()
 
-    def __read_data(self, xlsx_file):
+    def __read_data(self, setup_sheet, students_sheet):
         '''
         read the data from xlsx_file and populate class attributes except for reports
 
@@ -39,8 +39,6 @@ class Reports:
         xlsx_file : file
             an xlsx file containing student data and setup information about an assessment item
         '''
-        setup_sheet = pd.read_excel(xlsx_file, sheet_name='Setup')
-        students_sheet = pd.read_excel(xlsx_file, sheet_name='Students')
 
         # set up with duplicates for early set up
         self.topics = setup_sheet['Topic']

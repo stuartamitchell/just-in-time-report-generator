@@ -1,0 +1,11 @@
+ul#messages {
+    list-style-type: none;
+}
+
+li.message {
+    color: red
+}
+
+ul.nav {
+    list-style-type: none;
+}

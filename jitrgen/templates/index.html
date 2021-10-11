@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <form action="/" method="POST" enctype="multipart/form-data">
+        <input type="file" name="xlsx_file">
+        <input type="submit" value="Generate reports">
+    </form>
+
+    {% with messages = get_flashed_messages(with_categories=false) %}
+        {% if messages %}
+            <ul id="messages">
+                {% for message in messages %}
+                    <li class="message">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        
+        <h3>Downloads</h3>
+
+        <ul class="downloads">
+            <li><a href='/downloads/template.xlsx'>Template</a></li>
+            {% if download_report %}
+            <li><a href="/downloads/reports.xlsx">Download reports</a></li>
+            {% endif %}
+        </ul>
+
+        
+    {% endwith %}
+
+{% endblock %}

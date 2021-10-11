@@ -1,43 +1,55 @@
 import os
-from flask.helpers import send_from_directory
 import pandas as pd
-from flask import Flask, request, redirect, url_for 
+import secrets
+
+from flask.helpers import flash, send_from_directory
+from flask import Flask, request, redirect 
 from flask.templating import render_template
 from jitrgen.reports import Reports
 
 def create_app():
     app = Flask(__name__)
-    app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'tmp')
+    app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'downloads')
+    app.secret_key = secrets.token_bytes(16)
 
     def allowed_file(filename):
         return filename[-5:] == '.xlsx'
 
-    @app.route('/')
+    @app.route('/', methods=['GET', 'POST'])
     def index():
-        return render_template('home.html')
+        if request.method == 'POST':
+            xlsx_file = request.files['xlsx_file']
 
-    @app.route('/generate', methods=['POST'])
-    def generate():
-        xlsx_file = request.files['xlsx_file']
+            # first layer of validation
+            if xlsx_file and allowed_file(xlsx_file.filename):
+                # make sure the correct sheets actually exist
+                try:
+                    setup_sheet = pd.read_excel(xlsx_file, sheet_name='Setup')
+                    students_sheet = pd.read_excel(xlsx_file, sheet_name='Students')
 
-        if xlsx_file and allowed_file(xlsx_file.filename):
-            reports = Reports(xlsx_file)
+                    reports = Reports(setup_sheet, students_sheet)
 
-            student_names = [student.fullname for student in reports.students]
+                    student_names = [student.fullname for student in reports.students]
 
-            data = {'fullname': student_names, 'report': reports.reports}
-            df = pd.DataFrame(data=data)
-            
-            reports_file = os.path.join(app.config['UPLOAD_FOLDER'], 'reports.xlsx')
+                    data = {'fullname': student_names, 'report': reports.reports}
+                    df = pd.DataFrame(data=data)
+                    
+                    reports_file = os.path.join(app.config['UPLOAD_FOLDER'], 'reports.xlsx')
 
-            df.to_excel(reports_file)
+                    df.to_excel(reports_file)
 
-            return redirect('/download')
+                    return render_template('index.html', download_report=True)
+                except:
+                    flash('File must conform to the template')
+                    return redirect('/')
+            else:
+                flash('File must be a .xlsx file')
+                return redirect('/')
         else:
-            return redirect('/')
+            return render_template('index.html', report=False)
 
-    @app.route('/download')
-    def download():
-        return send_from_directory(app.config['UPLOAD_FOLDER'], 'reports.xlsx')
+    @app.route('/downloads/<filename>')
+    def download(filename):
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
         
     return app
