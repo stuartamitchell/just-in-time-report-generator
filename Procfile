@@ -1,1 +1,1 @@
-web: flask jitrgen
+web:flask jitrgen
