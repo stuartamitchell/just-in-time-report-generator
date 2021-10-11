@@ -6,10 +6,8 @@ from flask.templating import render_template
 from jitrgen.reports import Reports
 
 def create_app():
-    #UPLOAD_FOLDER = './tmp'
-
     app = Flask(__name__)
-    #app.config[UPLOAD_FOLDER] = UPLOAD_FOLDER
+    app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'tmp')
 
     def allowed_file(filename):
         return filename[-5:] == '.xlsx'
@@ -29,13 +27,17 @@ def create_app():
 
             data = {'fullname': student_names, 'report': reports.reports}
             df = pd.DataFrame(data=data)
-
-            uploads = os.path.join(app.root_path, 'tmp')
-            reports_file = os.path.join(uploads, 'reports.xlsx')
+            
+            reports_file = os.path.join(app.config['UPLOAD_FOLDER'], 'reports.xlsx')
 
             df.to_excel(reports_file)
 
-            return 'Reports generated'
+            return redirect('/download')
         else:
             return redirect('/')
+
+    @app.route('/download')
+    def download():
+        return send_from_directory(app.config['UPLOAD_FOLDER'], 'reports.xlsx')
+        
     return app

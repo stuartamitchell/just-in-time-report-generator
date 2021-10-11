@@ -2,14 +2,14 @@
 
 <html>
     <head>
-        <title>{% block title %}{% endblock %}</title>
+        <title>JIT Report Generator</title>
         <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     </head>
 
     <body>
         <section class="content">
             <header>
-                {% block header %}{% endblock %}
+                <h1>JIT Report Generator</h1>
             </header>
 
             {% block content %}{% endblock %}
